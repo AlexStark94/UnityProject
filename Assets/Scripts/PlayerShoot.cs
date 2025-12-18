@@ -37,7 +37,7 @@ public class PlayerShoot : MonoBehaviour
 #if UNITY_EDITOR || UNITY_STANDALONE
         // Mouse input for testing on PC - fire while button is held
         if (Input.GetMouseButton(0))
-        {
+    {
             isTouching = true;
         }
 #else
