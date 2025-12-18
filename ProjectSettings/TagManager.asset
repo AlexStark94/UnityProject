@@ -4,7 +4,15 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Bullet
+  - Fly
+  - Wall
+  - Jellygirl
+  - Key
+  - Breakable
+  - Fractured
+  - Paint
+  - Obstacle
+  - Platform
   layers:
   - Default
   - TransparentFX
@@ -14,10 +22,10 @@ TagManager:
   - UI
   - 
   - 
-  - 
-  - 
-  - 
-  - 
+  - Door
+  - Runners
+  - Finish
+  - Obstacles
   - 
   - 
   - 

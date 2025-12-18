@@ -1,0 +1,15 @@
+{
+    "name": "GoogleMobileAds",
+    "references": [
+        "GUID:6c65cbf0bac484d1ba805cb5ece117dc"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
