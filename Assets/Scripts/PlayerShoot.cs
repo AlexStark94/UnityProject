@@ -164,13 +164,22 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        // Don't collide with player or other bullets
-        if (other.CompareTag("Player") || other.CompareTag("Bullet"))
+        // Don't collide with player, squad, or other bullets
+        if (other.CompareTag("Player") || other.CompareTag("Bullet") || other.CompareTag("Squad"))
         {
             return;
         }
 
-        // You can extend this later to deal damage to enemies
+        // Check if we hit an enemy
+        Enemy enemy = other.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            enemy.TakeDamage(damage);
+            Destroy(gameObject);
+            return;
+        }
+
+        // Destroy bullet on any other collision
         Destroy(gameObject);
     }
 
@@ -185,3 +194,4 @@ public class Bullet : MonoBehaviour
         Destroy(gameObject);
     }
 }
+
