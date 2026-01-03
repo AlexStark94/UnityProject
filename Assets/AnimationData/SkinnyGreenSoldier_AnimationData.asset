@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eb184769b4a4161468d4aa14d82b0e88, type: 3}
   m_Name: SkinnyGreenSoldier_AnimationData
   m_EditorClassIdentifier: 
-  animatorController: {fileID: 0}
-  idleClip: {fileID: 0}
-  strafeLeftClip: {fileID: 0}
-  strafeRightClip: {fileID: 0}
+  animatorController: {fileID: 9100000, guid: 1f777828ce1daa14da10a700462c535b, type: 2}
+  idleClip: {fileID: -203655887218126122, guid: f97f5fdc18b4931419a6f41a80780b8e, type: 3}
+  strafeLeftClip: {fileID: -203655887218126122, guid: dcd3c71348c2fc949ae216dc754bedb0, type: 3}
+  strafeRightClip: {fileID: -203655887218126122, guid: 6220639f6fcc5a64aa3b649da40ac788, type: 3}
   moveDirectionParameter: MoveDirection
