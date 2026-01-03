@@ -21,11 +21,18 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("Reference to the Animator component. Will be found automatically if not assigned.")]
     public Animator animator;
 
+    [Header("Animation Smoothing")]
+    [Tooltip("Minimum input movement per frame to update animation (prevents jitter during very slow movement).")]
+    public float minMovementPerFrame = 2f; // In screen pixels per frame
+
     private Camera _mainCamera;
     private bool _isDragging;
     private float _startTouchX;
     private float _startPlayerX;
+    private float _previousPlayerX; // Track previous player position for stable direction detection
     private float _moveDirection; // -1 = left, 0 = idle, 1 = right
+    private float _lastDirection; // Track last direction to prevent rapid flips
+    private float _previousInputX; // Track previous input position for per-frame movement calculation
 
     private void Awake()
     {
@@ -119,30 +126,39 @@ public class PlayerMovement : MonoBehaviour
         if (Input.touchCount == 0)
         {
             _isDragging = false;
+            _previousPlayerX = transform.position.x;
             UpdateAnimationState(0f); // Idle when not touching
             return;
         }
 
         Touch touch = Input.GetTouch(0);
+        float currentTouchX = touch.position.x;
 
         switch (touch.phase)
         {
             case TouchPhase.Began:
                 _isDragging = false;
-                _startTouchX = touch.position.x;
+                _startTouchX = currentTouchX;
+                _previousInputX = currentTouchX;
                 _startPlayerX = transform.position.x;
+                _previousPlayerX = transform.position.x;
+                _lastDirection = 0f;
                 UpdateAnimationState(0f); // Idle when just touching (not moving yet)
                 break;
 
             case TouchPhase.Moved:
             case TouchPhase.Stationary:
-                float deltaX = touch.position.x - _startTouchX;
-                ApplyDrag(deltaX);
+                float deltaX = currentTouchX - _startTouchX;
+                float frameDeltaX = currentTouchX - _previousInputX;
+                ApplyDrag(deltaX, frameDeltaX);
+                _previousInputX = currentTouchX;
                 break;
 
             case TouchPhase.Ended:
             case TouchPhase.Canceled:
                 _isDragging = false;
+                _previousPlayerX = transform.position.x;
+                _lastDirection = 0f;
                 UpdateAnimationState(0f); // Idle when touch ends
                 break;
         }
@@ -150,30 +166,41 @@ public class PlayerMovement : MonoBehaviour
 
     private void HandleMouseInput()
     {
+        float currentMouseX = Input.mousePosition.x;
+
         if (Input.GetMouseButtonDown(0))
         {
             _isDragging = false;
-            _startTouchX = Input.mousePosition.x;
+            _startTouchX = currentMouseX;
+            _previousInputX = currentMouseX;
             _startPlayerX = transform.position.x;
+            _previousPlayerX = transform.position.x;
+            _lastDirection = 0f;
             UpdateAnimationState(0f); // Idle when just clicking (not moving yet)
         }
         else if (Input.GetMouseButton(0))
         {
-            float deltaX = Input.mousePosition.x - _startTouchX;
-            ApplyDrag(deltaX);
+            float deltaX = currentMouseX - _startTouchX;
+            float frameDeltaX = currentMouseX - _previousInputX;
+            ApplyDrag(deltaX, frameDeltaX);
+            _previousInputX = currentMouseX;
         }
         else if (Input.GetMouseButtonUp(0))
         {
             _isDragging = false;
+            _previousPlayerX = transform.position.x;
+            _lastDirection = 0f;
             UpdateAnimationState(0f); // Idle when mouse released
         }
         else
         {
+            _previousPlayerX = transform.position.x;
+            _lastDirection = 0f;
             UpdateAnimationState(0f); // Idle when not pressing mouse
         }
     }
 
-    private void ApplyDrag(float deltaX)
+    private void ApplyDrag(float deltaX, float frameDeltaX)
     {
         // If finger/mouse moved enough, start dragging
         if (!_isDragging && Mathf.Abs(deltaX) > dragThreshold)
@@ -187,6 +214,7 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        // Apply movement based on total delta (for smooth position updates)
         float screenWidth = Screen.width;
         float normalizedDelta = deltaX / screenWidth; // -1 .. 1 approx for full-width drag
 
@@ -196,9 +224,35 @@ public class PlayerMovement : MonoBehaviour
         position.x = Mathf.Clamp(targetX, minX, maxX);
         transform.position = position;
 
-        // Determine direction: -1 for left, 1 for right
-        float direction = Mathf.Sign(deltaX);
-        UpdateAnimationState(direction);
+        // Calculate direction based on input movement
+        // Use frameDeltaX for instant direction detection when switching
+        float newDirection = 0f;
+        
+        // If moving significantly this frame, use frame direction (instant response)
+        if (Mathf.Abs(frameDeltaX) > minMovementPerFrame)
+        {
+            newDirection = Mathf.Sign(frameDeltaX);
+        }
+        // If barely moving this frame but overall movement exists, use overall direction
+        else if (Mathf.Abs(deltaX) > dragThreshold)
+        {
+            newDirection = Mathf.Sign(deltaX);
+        }
+        // If not moving, keep last direction (prevents flickering to idle during slow movement)
+        else
+        {
+            newDirection = _lastDirection;
+        }
+
+        // Always update animation - this gives instant response when switching directions
+        // The minMovementPerFrame threshold prevents jitter during very slow movement
+        if (newDirection != _lastDirection || Mathf.Abs(frameDeltaX) > minMovementPerFrame)
+        {
+            UpdateAnimationState(newDirection);
+            _lastDirection = newDirection;
+        }
+        
+        _previousPlayerX = position.x;
     }
 
     private void UpdateAnimationState(float direction)
@@ -227,13 +281,6 @@ public class PlayerMovement : MonoBehaviour
         if (!string.IsNullOrEmpty(animationData.moveDirectionParameter))
         {
             animator.SetFloat(animationData.moveDirectionParameter, direction);
-            
-            // Debug log to verify parameter is being set
-            if (Application.isPlaying)
-            {
-                float currentValue = animator.GetFloat(animationData.moveDirectionParameter);
-                Debug.Log($"PlayerMovement: Setting MoveDirection to {direction}, Current value in Animator: {currentValue}");
-            }
         }
         else
         {
